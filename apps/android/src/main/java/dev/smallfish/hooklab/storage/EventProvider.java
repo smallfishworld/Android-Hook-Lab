@@ -109,8 +109,8 @@ public final class EventProvider extends ContentProvider {
         // Ignore external projection/where/sort to avoid arbitrary SQL or sensitive data exposure.
         Cursor cursor = database.getReadableDatabase().query("events",
             new String[]{"_id", "method", "arg0", "arg1", "result",
-                         "outcome", "exception", "duration_ns", "pid", "tid"},
-            null, null, null, null, "_id DESC", "80");
+                         "outcome", "exception", "duration_ns", "when_ns", "pid", "tid"},
+            null, null, null, null, "_id DESC", "250");
         cursor.setNotificationUri(checkedContext().getContentResolver(), uri);
         return cursor;
     }
