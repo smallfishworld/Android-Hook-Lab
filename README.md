@@ -6,7 +6,7 @@
 
 ## 立即体验
 
-打开 GitHub [Android CI 工作流](./.github/workflows/android.yml)，从**成功的最新构建**下载 `hook-lab-m0-debug-apks`（目前 Artifact 名字延续 M0）：
+打开 GitHub [Android CI 工作流](./.github/workflows/android.yml)，从**成功的最新构建**下载 `hook-lab-m1-preview-debug-apks`（两个 APK 必须来自同一次构建）：
 
 1. 从同一个 CI Artifact 安装 `android-debug.apk`（Hook Lab）和 `demo-app-debug.apk`（测试目标）。它们必须具有同一套调试签名。
 2. 在 Vector 管理器启用 **Android Hook Lab** 模块，Scope 仅选 **Hook Lab Demo**。
