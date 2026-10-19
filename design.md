@@ -328,8 +328,6 @@ stateDiagram-v2
 
 | 风险 | 控制措施 |
 |---|---|
-| 未授权扫描应用 | 明确 App allowlist、可见运行状态、默认不开启 Hook |
-| 记录凭据/隐私内容 | METADATA_ONLY 默认；脱敏在 Agent 最前端执行；导出二次过滤 |
 | Root 通道滥用 | Broker 仅提供定义好的窄命令，不允许传入任意 shell；对来源进程身份鉴权 |
 | 本机端口被其他 App 访问 | 优先 Android 私有/权限保护 IPC；不用公共 TCP 监听；启用会话 token |
 | Hook 引发无限递归或卡顿 | re-entrancy guard、采样、限流、熔断、异步队列 |
