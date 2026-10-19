@@ -1,57 +1,74 @@
 # Android Hook Lab
 
-一个面向**自有应用和明确授权测试目标**的 Android Hook、动态方法调用与性能分析项目。
+基于 **Vector / modern libxposed** 的 Android 动态 Hook 调试工作台，面向自有应用及明确授权的测试目标。
 
-> **M0 开发原型（代码已提交，尚未完成 Android 构建和 RMX3350 真机验证）。**
-> 目前仅接收本项目 Demo App 的两个方法事件，不支持任意第三方 App。
+> 当前版本：**0.2.0 M1 Preview**。已经有 Compose Android UI、Demo 方法 Hook、实时事件、统计和 JSONL 导出。**尚未完成动态任意应用 Hook、Frida、Native 分析及真实设备验收**。
 
-## 文档
+## 立即体验
 
-- [spec.md — 产品需求](./spec.md)
-- [design.md — 系统设计](./design.md)
-- [docs/m0-test-plan.md — M0 手动验证步骤](./docs/m0-test-plan.md)
+打开 GitHub [Android CI 工作流](./.github/workflows/android.yml)，从**成功的最新构建**下载 `hook-lab-m0-debug-apks`（目前 Artifact 名字延续 M0）：
 
-## 已实现的 M0 代码
+1. 从同一个 CI Artifact 安装 `android-debug.apk`（Hook Lab）和 `demo-app-debug.apk`（测试目标）。它们必须具有同一套调试签名。
+2. 在 Vector 管理器启用 **Android Hook Lab** 模块，Scope 仅选 **Hook Lab Demo**。
+3. 强制停止并重新打开 Demo，执行亮度/正常校验/异常或 100 次调用测试。
+4. 返回 Hook Lab **Live** 页，检查事件是否真实出现；点击卡片查看完整参数与耗时。
+5. 在 **Methods** 页按方法筛选，在 **System** 页导出 JSONL 或清理事件。
 
-- Android Java 多模块 Gradle 工程（AGP 8.7.3 / Gradle 8.9 / JDK 17 / SDK 35）。
-- [Demo App](./samples/demo-app)：`ImageProcessor.adjustBrightness(float,int)`、`validateLevel(int)`、方法重载与受控异常。
-- [Vector Hook Adapter](./engines/vector)：libxposed API 102，限定 Demo 作用域；只观察，不修改返回值。
-- **异步采集**：Hook 回调只将安全数值事件写入 256 条有界队列；独立线程转交 ContentProvider。
-- **安全事件桥**：签名级权限 + 调用者 UID/包名检查；只有 Hook Lab 本应用可读取/删除。
-- **本机事件展示**：M0 Android UI 每秒读取最多 80 个最新事件；SQLite 最多保留约 1000 条事件。
-- 单元测试 + GitHub Actions 构建和 APK Artifact 配置。
+> GitHub Actions 构建成功 ≠ Root/Vector 实机注入已经验证。真机测试请参考 [M0 手动测试清单](docs/m0-test-plan.md) 和 [M1 UI 验收](docs/m1-ui.md)。
 
-没有包含 Root 远程 Shell、Frida Server、任意目标注入功能；M0 仅接受这两个测试方法的数值数据。
+## M1 Preview 功能
 
-## 从 GitHub Actions 获取 APK
+| 模块 | 已实现 |
+|---|---|
+| Android UI | Kotlin + Jetpack Compose，暗色调试工作台；Live / Methods / System |
+| 目标范围 | 固定为项目内的签名 Demo；不允许任意应用静默注入 |
+| Vector Hook | `adjustBrightness(float,int)`、`validateLevel(int)`；读取安全数字参数、结果和异常类型 |
+| 实时事件 | 有界队列 → ContentProvider → SQLite；每 1.2 秒读取最近事件 |
+| 统计分析 | 最新 250 条记录的计数、异常计数、P95 调用耗时 |
+| 调用查看 | 方法/PID 搜索、事件类型过滤、单条调用详情、暂停 UI 刷新 |
+| 数据管理 | 存储配额策略、本机清除、系统文件选择器 JSONL 导出 |
+| 测试目标 | 亮度滑块、正常/异常校验、100 次后台批量调用 |
+| CI | Android 编译、协议与 Demo 单元测试、现代 Xposed 元数据检查及双 APK Artifact |
 
-1. 打开 [Android M0 Build](../../actions/workflows/android.yml)。
-2. 构建通过后下载 Artifact `hook-lab-m0-debug-apks`。
-3. 从**同一次构建**安装 `android-debug.apk` 与 `demo-app-debug.apk`（签名必须匹配）。
-4. 在 Vector 中启用 Android Hook Lab 模块，Scope 只选 **Hook Lab Demo**。
-5. 强制停止并重新打开 Demo；点击正常调用和异常按钮。
-6. 返回 Hook Lab App，查看**真实 Hook 事件**。如果没有，请参考 [M0 测试计划](./docs/m0-test-plan.md)。
+### 明确的限制
 
-本地构建（需事先安装 Android SDK 35、JDK17、Gradle 8.9）：
+- “Pause View”仅暂停**界面刷新**，不停止目标进程中已经注册的 Hook。
+- Methods 页是**两个已验证设计目标的方法清单**，不是动态枚举整个 Android 系统。
+- 显示 DATA RECEIVED 只表示存在历史 Hook 事件，**并不保证 Vector 目前在线**。
+- P95 基于最近 250 条调用快照，不是全历史数据。
+- 当前尚未实现 Frida、Native、调用堆栈、调用链、任意授权 App 的方法扫描和热插拔 Hook 规则。
+- 需要与 Android 13 真机上的 Vector 版本兼容；未完成设备实测前不承诺成功率。
+
+## 设计文档
+
+- [spec.md — 需求规格](spec.md)
+- [design.md — 技术架构](design.md)
+- [docs/m1-ui.md — UI 与交互验收](docs/m1-ui.md)
+- [docs/m0-test-plan.md — 真机调试指南](docs/m0-test-plan.md)
+
+## 技术与工程
+
+```text
+apps/android          Compose 控制台 + EventProvider/SQLite
+engines/vector        libxposed API 102 Hook + bounded async relay
+libs/protocol         白名单事件模型 + P95 统计及单元测试
+samples/demo-app      Java 受控测试应用
+core/                 领域/用例预留
+runtime/collector     扩展采集器预留
+libs/storage          存储层演进预留
+libs/analysis         分析层演进预留
+tools/desktop         桌面分析器预留
+```
+
+技术基线：JDK 17、Gradle 8.9、Android Gradle Plugin 8.7.3、Kotlin 2.0.21、Jetpack Compose、Android SDK 35。
+
+本地构建（需要正确安装 Android SDK、JDK 17 及 Gradle）：
 
 ```bash
 gradle :libs:protocol:test :samples:demo-app:testDebugUnitTest \
-  :apps:android:assembleDebug :samples:demo-app:assembleDebug
+  :apps:android:testDebugUnitTest :apps:android:assembleDebug :samples:demo-app:assembleDebug
 ```
 
-## 规划中的功能（**未实现**）
+## 安全与隐私
 
-- 任意已授权 App 的类/方法浏览与动态注册规则。
-- Frida Java/Native 双引擎、调用树、线程时间线和堆栈。
-- 加密导出、桌面可视化、符号解析、完整会话状态机。
-- 长时间压力测试与 Android 13 / realme ROM 真机验证。
-
-## 工程结构
-
-`apps/android`（UI / event provider）、`engines/vector`（Xposed adapter / relay）、`libs/protocol`（共享白名单及校验）、`samples/demo-app`（测试靶标），其余 `core`、`runtime`、`libs/storage`、`libs/analysis`、`tools/desktop` 为后续扩展目录。
-
-## 安全与许可证
-
-只在自有/授权 App 中测试；默认仅采集 Demo 数值数据，不提取密码、Cookie、Token、私人消息或支付内容。兼容性取决于实际安装的 Vector 版本及其现代 API 支持情况。项目许可证将在第三方依赖许可审查后确定。
-
-参考 [Vector](https://github.com/JingMatrix/Vector)、[libxposed-api](https://github.com/JingMatrix/libxposed-api)、[Frida](https://frida.re/)。
+所有 M1 事件来源限定于项目自带 Demo，经签名权限和来源包 UID 双重验证，且仅包含安全数字字段、方法名称与异常**类型**。默认不录制私人消息、账号信息、密钥或任意对象内容，也不上传到服务器。不要对没有测试授权的应用使用 Hook。许可证将在完成依赖许可审查后确定。
