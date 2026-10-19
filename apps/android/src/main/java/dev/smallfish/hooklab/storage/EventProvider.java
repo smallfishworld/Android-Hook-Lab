@@ -26,11 +26,11 @@ public final class EventProvider extends ContentProvider {
     private int insertCounter;
 
     @Override public boolean onCreate() {
-        database = new EventDatabase(requireContext());
+        database = new EventDatabase(checkedContext());
         return true;
     }
 
-    private Context requireContext() {
+    private Context checkedContext() {
         Context ctx = getContext();
         if (ctx == null) throw new IllegalStateException("No provider context");
         return ctx;
@@ -42,7 +42,7 @@ public final class EventProvider extends ContentProvider {
 
     private void verifyWriter() {
         int callingUid = Binder.getCallingUid();
-        String[] packages = requireContext().getPackageManager().getPackagesForUid(callingUid);
+        String[] packages = checkedContext().getPackageManager().getPackagesForUid(callingUid);
         if (packages == null || !Arrays.asList(packages).contains(EventContract.TARGET_PACKAGE)) {
             throw new SecurityException("Only signed Hook Lab Demo can submit events");
         }
@@ -98,7 +98,7 @@ public final class EventProvider extends ContentProvider {
             db.execSQL("DELETE FROM events WHERE _id NOT IN " +
                 "(SELECT _id FROM events ORDER BY _id DESC LIMIT 1000)");
         }
-        requireContext().getContentResolver().notifyChange(uri, null);
+        checkedContext().getContentResolver().notifyChange(uri, null);
         return ContentUris.withAppendedId(uri, id);
     }
 
@@ -111,7 +111,7 @@ public final class EventProvider extends ContentProvider {
             new String[]{"_id", "method", "arg0", "arg1", "result",
                          "outcome", "exception", "duration_ns", "pid", "tid"},
             null, null, null, null, "_id DESC", "80");
-        cursor.setNotificationUri(requireContext().getContentResolver(), uri);
+        cursor.setNotificationUri(checkedContext().getContentResolver(), uri);
         return cursor;
     }
 
@@ -119,7 +119,7 @@ public final class EventProvider extends ContentProvider {
         verifyUri(uri);
         verifyOwner();
         int count = database.getWritableDatabase().delete("events", null, null);
-        requireContext().getContentResolver().notifyChange(uri, null);
+        checkedContext().getContentResolver().notifyChange(uri, null);
         return count;
     }
 

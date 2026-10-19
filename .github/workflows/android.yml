@@ -18,16 +18,19 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android SDK components
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 4 -type f -name sdkmanager -print -quit)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build and test
+      - name: Unit tests and debug builds
         run: |
-          gradle --no-daemon :samples:demo-app:testDebugUnitTest :apps:android:testDebugUnitTest :apps:android:assembleDebug :samples:demo-app:assembleDebug
-      - name: Ensure modern Xposed metadata is packaged
+          gradle --no-daemon :libs:protocol:test :samples:demo-app:testDebugUnitTest :apps:android:testDebugUnitTest :apps:android:assembleDebug :samples:demo-app:assembleDebug
+      - name: Check modern Xposed entry metadata
         run: |
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/java_init.list'
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/scope.list'
