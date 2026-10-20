@@ -139,6 +139,9 @@ public final class HookLabModule extends XposedModule {
                 lastRules=null;
                 return;
             }
+            Bundle heartbeat=new Bundle();
+            heartbeat.putString("package",pkg);
+            ctx.getContentResolver().call(TRACE,"heartbeat",null,heartbeat);
             String wire=policy.getString(RuleWire.RULES_PREFIX + pkg, "");
             if (!wire.equals(lastRules)) {
                 List<String> requested=RuleWire.decode(pkg,wire);
