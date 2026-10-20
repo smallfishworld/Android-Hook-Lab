@@ -16,6 +16,8 @@ import sys
 import threading
 import uuid
 
+from rules import read_rules, write_rules
+
 DEMO_PACKAGE = "dev.smallfish.hooklab.demo"
 
 
@@ -59,11 +61,13 @@ class HookConsole(cmd.Cmd):
     intro = ("Android Hook Lab M2: dynamic Java Hook (Frida 17)\n"
              "Type 'help' for commands; always stay within your testing authorization.")
 
-    def __init__(self, exports, recorder: TraceRecorder):
+    def __init__(self, exports, recorder: TraceRecorder, package: str):
         super().__init__()
         self.exports = exports
         self.recorder = recorder
         self.latest_error = ""
+        self.package = package
+        self.active_rules: dict[str, dict] = {}
 
     def _call(self, name: str, *args):
         try:
@@ -104,12 +108,50 @@ class HookConsole(cmd.Cmd):
             return
         out = self._call("install", parts[0], parts[1], parts[2:])
         if out:
+            self.active_rules[out["id"]] = {
+                "class_name": parts[0], "method_name": parts[1],
+                "argument_types": parts[2:], "enabled": True,
+            }
             print(f"Hook registered: {out['id']}  {out['method']}")
 
     def do_unhook(self, line: str) -> None:
         """unhook <F#> -- detach a selected interceptor"""
         if self._call("remove", line.strip()):
+            self.active_rules.pop(line.strip(), None)
             print("Unhooked.")
+
+    def do_loadrules(self, line: str) -> None:
+        """loadrules <rules.json> -- install up to 16 exact, allowlisted Hook rules"""
+        file = Path(line.strip())
+        if not line.strip():
+            print("Usage: loadrules rules.json")
+            return
+        try:
+            rules = read_rules(file, self.package)
+        except (OSError, ValueError) as ex:
+            print(f"[invalid rules] {ex}")
+            return
+        for rule in rules:
+            if not rule["enabled"]:
+                continue
+            if len(self.active_rules) >= 16:
+                print("[limit] Maximum 16 simultaneous hooks")
+                break
+            result = self._call("install", rule["class_name"], rule["method_name"], rule["argument_types"])
+            if result:
+                self.active_rules[result["id"]] = rule
+                print(f"Installed {result['id']}: {result['method']}")
+
+    def do_saverules(self, line: str) -> None:
+        """saverules <rules.json> -- save current exact Hook declarations (no secrets)"""
+        if not line.strip():
+            print("Usage: saverules rules.json")
+            return
+        try:
+            write_rules(Path(line.strip()), self.package, list(self.active_rules.values()))
+            print("Saved " + str(len(self.active_rules)) + " Hook rules")
+        except (OSError, ValueError) as ex:
+            print(f"[save failed] {ex}")
 
     def do_status(self, _line: str) -> None:
         """status -- list active hooks and dropped event counters"""
@@ -139,6 +181,7 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prefix", default=None, help="class prefix; defaults to --package")
     parser.add_argument("--authorized", action="store_true",
                         help="explicitly confirm authorization for a non-Demo package")
+    parser.add_argument("--rules", type=Path, help="load validated exact-method rules on startup")
     parser.add_argument("--stack", action="store_true",
                         help="capture up to 12 class/method-only app stack frames")
     parser.add_argument("--max-events", type=int, default=200,
@@ -204,7 +247,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Connected to {args.package}; {json.dumps(config)}")
         print("Try: classes ImageProcessor | methods dev.smallfish.hooklab.demo.ImageProcessor")
         print("Then: hook dev.smallfish.hooklab.demo.ImageProcessor adjustBrightness float int")
-        HookConsole(script.exports_sync, recorder).cmdloop()
+        console = HookConsole(script.exports_sync, recorder, args.package)
+        if args.rules:
+            console.do_loadrules(str(args.rules))
+        console.cmdloop()
     except KeyboardInterrupt:
         print("\nInterrupted; stopping the tracing session.")
     except Exception as ex:
