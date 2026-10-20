@@ -2,7 +2,16 @@
 
 面向自有 / 明确授权应用的 Android 方法 Hook、运行时分析与性能诊断工作台。
 
-> **当前：v0.3.0 M2 Preview（2026-10-20）**。M1 的 Vector 常驻 Demo Hook + Compose UI 保留；新增 Frida 17 电脑端动态 Java Hook、方法发现、JSON 规则、显式调用树和热点分析，以及 Android 端 Frida Trace 的**离线**导入查看。兼容性仍需 RMX3350 真机验证。
+> **当前：v0.3.1 Mobile Preview（2026-10-20）**。M1 的 Vector 常驻 Demo Hook + Compose UI 保留；新增 Frida 17 电脑端动态 Java Hook、方法发现、JSON 规则、显式调用树和热点分析，以及 Android 端 Frida Trace 的**离线**导入查看。兼容性仍需 RMX3350 真机验证。
+
+## 手机直接使用（首选）
+
+**0.3.1 Mobile Preview**：无需电脑、ADB、Frida Server，也无需 Python。安装同一次 CI 构建的 Hook Lab 与 Demo APK 后，在 Vector 中启用 Hook Lab 并将 Scope 设为 Demo，再打开 **Hook Lab → Methods → On-Device Hook Control**，直接在手机管理三种 Demo 方法的采集开关，并在 Live 页看结果。
+
+- 已实现：主采集开关、单方法采集规则、Demo 反射目录、签名保护的本地通信、实时事件流。
+- 尚未实现：任意授权 APP 的动态 Hook、新 Hook 动态注册/物理卸载和手机端实时 Frida。**CI 通过不等于真机已验证。**
+
+[详细手机使用及验收指南](docs/m2-mobile-guide.md)。电脑端 Frida 命令行保留为**可选**高级调试工具，不再作为日常使用前提。
 
 ## 核心能力
 
