@@ -85,6 +85,11 @@ public final class TraceProvider extends ContentProvider {
         return result;
     }
     @Override public Bundle call(String method, String arg, Bundle extras) {
+        if ("heartbeat".equals(method)) {
+            target(extras);
+            preferences.edit().putLong("heartbeat", SystemClock.elapsedRealtime()).apply();
+            return Bundle.EMPTY;
+        }
         if ("catalog".equals(method) || "methods".equals(method)) {
             target(extras);
             String pkg = selected();
