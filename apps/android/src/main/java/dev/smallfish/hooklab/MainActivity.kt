@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -539,6 +540,7 @@ private fun MethodCard(name: String, signature: String, description: String,
 private fun SystemPanel(events: List<TraceEvent>, error: String?, paused: Boolean,
                         refresh: () -> Unit, export: () -> Unit, clear: () -> Unit,
                         modifier: Modifier) {
+    val context = LocalContext.current
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(18.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
@@ -567,6 +569,15 @@ private fun SystemPanel(events: List<TraceEvent>, error: String?, paused: Boolea
                         Setting("ERROR", error)
                     }
                 }
+            }
+        }
+        item {
+            Button(
+                onClick = { context.startActivity(Intent(context, TraceAnalysisActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Periwinkle, contentColor = Bg)
+            ) {
+                Text("OPEN M2 TRACE ANALYZER ↗", fontWeight = FontWeight.Bold)
             }
         }
         item {
