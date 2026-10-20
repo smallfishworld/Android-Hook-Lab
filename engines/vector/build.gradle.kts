@@ -2,7 +2,7 @@ plugins { id("com.android.library") }
 
 android {
     namespace = "dev.smallfish.hooklab.hook"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig { minSdk = 29 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

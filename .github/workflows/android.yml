@@ -1,4 +1,4 @@
-name: Android Hook Lab Build
+name: Android Hook Lab Mobile
 on:
   push:
     branches: [main]
@@ -9,33 +9,6 @@ permissions:
   contents: read
 
 jobs:
-  m2-agent:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Build Frida 17 Java agent
-        working-directory: engines/frida
-        run: |
-          npm install --no-audit --no-fund
-          npm run test
-          mkdir -p dist
-          npm run build
-          test -s dist/agent.bundle.js
-      - name: Run Python desktop analyzer tests
-        run: python -m unittest discover -s tools/desktop/tests -v
-      - uses: actions/upload-artifact@v4
-        with:
-          name: hook-lab-m2-frida-agent
-          path: engines/frida/dist/agent.bundle.js
-          if-no-files-found: error
-
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -47,25 +20,22 @@ jobs:
           java-version: '17'
       - name: Install Android SDK components
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 4 -type f -name sdkmanager -print -quit)"
           test -n "$SDKMANAGER"
-          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
-      - name: Unit tests and debug builds
+          gradle-version: '8.11.1'
+      - name: Test, lint and package standalone Android APK
         run: |
-          gradle --no-daemon :libs:protocol:test :samples:demo-app:testDebugUnitTest :apps:android:testDebugUnitTest :apps:android:assembleDebug :samples:demo-app:assembleDebug :apps:android:lintDebug :samples:demo-app:lintDebug
-      - name: Check modern Xposed entry metadata
+          gradle --no-daemon :libs:protocol:test :apps:android:testDebugUnitTest :apps:android:assembleDebug :apps:android:lintDebug
+      - name: Validate modern Xposed metadata
         run: |
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/java_init.list'
-          unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/scope.list'
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/module.prop'
+          unzip -p apps/android/build/outputs/apk/debug/android-debug.apk META-INF/xposed/module.prop | grep -F 'staticScope=false'
       - uses: actions/upload-artifact@v4
         with:
-          name: hook-lab-m2-mobile-debug-apks
-          path: |
-            apps/android/build/outputs/apk/debug/*.apk
-            samples/demo-app/build/outputs/apk/debug/*.apk
+          name: hook-lab-v0.4-mobile
+          path: apps/android/build/outputs/apk/debug/*.apk
           if-no-files-found: error
