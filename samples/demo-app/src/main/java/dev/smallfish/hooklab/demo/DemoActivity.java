@@ -83,6 +83,14 @@ public final class DemoActivity extends Activity {
             output.setText("Call #" + callCount + "\nResult: " + value + " · delta +12%");
         });
         brightnessCard.addView(run);
+        brightnessCard.addView(gap(9));
+        Button intOverload = button("TEST INTEGER OVERLOAD", false);
+        intOverload.setOnClickListener(v -> {
+            int value = processor.adjustBrightness(100, 25);
+            callCount++;
+            output.setText("Call #" + callCount + "\\nInteger brightness: " + value);
+        });
+        brightnessCard.addView(intOverload);
         page.addView(brightnessCard);
         page.addView(gap(15));
 

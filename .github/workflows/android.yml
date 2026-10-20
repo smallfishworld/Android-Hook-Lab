@@ -64,7 +64,7 @@ jobs:
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/module.prop'
       - uses: actions/upload-artifact@v4
         with:
-          name: hook-lab-m2-preview-debug-apks
+          name: hook-lab-m2-mobile-debug-apks
           path: |
             apps/android/build/outputs/apk/debug/*.apk
             samples/demo-app/build/outputs/apk/debug/*.apk

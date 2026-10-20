@@ -479,12 +479,20 @@ private fun InfoCard(title: String, body: String, highlight: Color) {
 @Composable
 private fun Methods(events: List<TraceEvent>, open: () -> Unit,
                     onExplore: (Filter) -> Unit, modifier: Modifier) {
+    val context = LocalContext.current
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(18.dp),
         verticalArrangement = Arrangement.spacedBy(13.dp)) {
         item {
             TitleText("METHOD EXPLORER")
             Spacer(Modifier.height(5.dp))
-            Caption("Known instrumented Demo methods · scope limited")
+            Caption("Captured Demo methods · editable phone-side capture rules")
+        }
+        item {
+            Button(
+                onClick = { context.startActivity(Intent(context, MobileHookActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Bg)
+            ) { Text("OPEN ON-DEVICE HOOK CONTROL ↗", fontWeight = FontWeight.Bold) }
         }
         item {
             MethodCard("adjustBrightness",
@@ -501,9 +509,9 @@ private fun Methods(events: List<TraceEvent>, open: () -> Unit,
             }
         }
         item {
-            InfoCard("COMING NEXT", "Live class enumeration and user-defined method hooks " +
-                "will follow once Vector service compatibility is verified. These two " +
-                "entries are actual Demo hooks, not a fake list of installed app methods.", Periwinkle)
+            InfoCard("MOBILE CONTROL", "Rule switches are available inside Hook Lab. " +
+                "The method catalog is obtained from the Demo process by reflection. " +
+                "Only the implemented Demo probes can be configured in this preview.", Periwinkle)
         }
         item {
             Button(onClick = open, modifier = Modifier.fillMaxWidth(),
@@ -573,11 +581,20 @@ private fun SystemPanel(events: List<TraceEvent>, error: String?, paused: Boolea
         }
         item {
             Button(
+                onClick = { context.startActivity(Intent(context, MobileHookActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Bg)
+            ) {
+                Text("ON-DEVICE HOOK CONTROL ↗", fontWeight = FontWeight.Bold)
+            }
+        }
+        item {
+            Button(
                 onClick = { context.startActivity(Intent(context, TraceAnalysisActivity::class.java)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Periwinkle, contentColor = Bg)
             ) {
-                Text("OPEN M2 TRACE ANALYZER ↗", fontWeight = FontWeight.Bold)
+                Text("OPEN OFFLINE TRACE ANALYZER ↗", fontWeight = FontWeight.Bold)
             }
         }
         item {
@@ -605,8 +622,8 @@ private fun SystemPanel(events: List<TraceEvent>, error: String?, paused: Boolea
         }
         item {
             InfoCard("PREVIEW LIMITS",
-                "Frida/Native, stack traces, custom app targets, dynamic rules, " +
-                "and actual Hook-stop controls are not implemented yet.", Muted)
+                "No PC or ADB needed for Demo capture switches. This does not unregister " +
+                "the Vector interception itself or provide arbitrary-app Hook yet.", Muted)
         }
     }
 }

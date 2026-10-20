@@ -1,66 +1,97 @@
 package dev.smallfish.hooklab.hook;
 
 import android.app.Application;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
+import dev.smallfish.hooklab.protocol.MobileControlContract;
 import java.lang.reflect.Method;
 import io.github.libxposed.api.XposedModule;
-import dev.smallfish.hooklab.protocol.EventContract;
 
 /**
- * Modern libxposed entry. M0 ONLY hooks deterministic methods in the included demo APK.
- * No third-party package browsing, credential collection or method rewriting.
+ * M2 mobile-first Vector module for project-owned Demo App.
+ * Methods are intercepted once in-process; Android Hook Lab UI changes *capture*
+ * without USB/ADB. No hidden access to third-party application data.
  */
 public final class DemoModule extends XposedModule {
-    private static final String TAG = "HookLabM0";
+    private static final String TAG = "HookLabMobile";
 
-    @Override
-    public void onPackageReady(PackageReadyParam param) {
-        if (!EventContract.TARGET_PACKAGE.equals(param.getPackageName()) || !param.isFirstPackage()) {
-            return;
-        }
+    @Override public void onPackageReady(PackageReadyParam param) {
+        if (!"dev.smallfish.hooklab.demo".equals(param.getPackageName())
+                || !param.isFirstPackage()) return;
         try {
-            // Application.attach is called before the demo Activity runs, providing a valid Context.
+            // Covers both early and slightly later libxposed module initialization.
             Method attach = Application.class.getDeclaredMethod("attach", Context.class);
             hook(attach).intercept(chain -> {
                 Object result = chain.proceed();
-                Object value = chain.getArg(0);
-                if (value instanceof Context) {
-                    HookRelay.initialize((Context) value);
+                if (chain.getArg(0) instanceof Context) {
+                    HookRelay.initialize((Context) chain.getArg(0));
                 }
                 return result;
             });
+            Method createApp = Instrumentation.class
+                    .getDeclaredMethod("callApplicationOnCreate", Application.class);
+            hook(createApp).intercept(chain -> {
+                Object outcome = chain.proceed();
+                if (chain.getArg(0) instanceof Application) {
+                    HookRelay.initialize((Application) chain.getArg(0));
+                }
+                return outcome;
+            });
 
             Class<?> processor = param.getClassLoader()
-                .loadClass("dev.smallfish.hooklab.demo.ImageProcessor");
-            Method brightness = processor.getDeclaredMethod("adjustBrightness", float.class, int.class);
+                    .loadClass("dev.smallfish.hooklab.demo.ImageProcessor");
+            Method brightnessFloat =
+                    processor.getDeclaredMethod("adjustBrightness", float.class, int.class);
+            Method brightnessInt =
+                    processor.getDeclaredMethod("adjustBrightness", int.class, int.class);
             Method validate = processor.getDeclaredMethod("validateLevel", int.class);
 
-            hook(brightness).intercept(chain -> {
+            hook(brightnessFloat).intercept(chain -> {
                 long start = SystemClock.elapsedRealtimeNanos();
                 Object result = null;
                 Throwable failure = null;
                 try {
                     result = chain.proceed();
                     return result;
-                } catch (Throwable t) {
-                    failure = t;
-                    throw t;
+                } catch (Throwable error) {
+                    failure = error;
+                    throw error;
                 } finally {
-                    // Instrumentation must never change the app's method outcome.
                     try {
-                        float arg0 = ((Number) chain.getArg(0)).floatValue();
-                        int arg1 = ((Number) chain.getArg(1)).intValue();
-                        Float numericResult = result instanceof Number
-                                ? ((Number) result).floatValue() : null;
-                        HookRelay.capture(EventContract.METHOD_BRIGHTNESS, arg0, arg1,
-                                numericResult, failure, SystemClock.elapsedRealtimeNanos() - start);
-                    } catch (Throwable ignored) {
-                        // Do not leak instrumentation errors to the target.
-                    }
+                        HookRelay.capture(MobileControlContract.METHOD_BRIGHTNESS_FLOAT,
+                                ((Number) chain.getArg(0)).floatValue(),
+                                ((Number) chain.getArg(1)).intValue(),
+                                result instanceof Number
+                                        ? ((Number) result).floatValue() : null,
+                                failure, SystemClock.elapsedRealtimeNanos() - start);
+                    } catch (Throwable ignored) {}
                 }
             });
+
+            hook(brightnessInt).intercept(chain -> {
+                long start = SystemClock.elapsedRealtimeNanos();
+                Object result = null;
+                Throwable failure = null;
+                try {
+                    result = chain.proceed();
+                    return result;
+                } catch (Throwable error) {
+                    failure = error;
+                    throw error;
+                } finally {
+                    try {
+                        HookRelay.capture(MobileControlContract.METHOD_BRIGHTNESS_INT,
+                                ((Number) chain.getArg(0)).floatValue(),
+                                ((Number) chain.getArg(1)).intValue(),
+                                result instanceof Number
+                                        ? ((Number) result).floatValue() : null,
+                                failure, SystemClock.elapsedRealtimeNanos() - start);
+                    } catch (Throwable ignored) {}
+                }
+            });
+
             hook(validate).intercept(chain -> {
                 long start = SystemClock.elapsedRealtimeNanos();
                 Object result = null;
@@ -68,24 +99,22 @@ public final class DemoModule extends XposedModule {
                 try {
                     result = chain.proceed();
                     return result;
-                } catch (Throwable t) {
-                    failure = t;
-                    throw t;
+                } catch (Throwable error) {
+                    failure = error;
+                    throw error;
                 } finally {
                     try {
-                        float level = ((Number) chain.getArg(0)).floatValue();
-                        Float numericResult = result instanceof Number
-                                ? ((Number) result).floatValue() : null;
-                        HookRelay.capture(EventContract.METHOD_VALIDATE, level, 0,
-                                numericResult, failure, SystemClock.elapsedRealtimeNanos() - start);
-                    } catch (Throwable ignored) {
-                        // Never modify a business exception or return value.
-                    }
+                        HookRelay.capture(MobileControlContract.METHOD_VALIDATE,
+                                ((Number) chain.getArg(0)).floatValue(), 0,
+                                result instanceof Number
+                                        ? ((Number) result).floatValue() : null,
+                                failure, SystemClock.elapsedRealtimeNanos() - start);
+                    } catch (Throwable ignored) {}
                 }
             });
-            log(Log.INFO, TAG, "Demo-only Java hooks installed");
-        } catch (ReflectiveOperationException | RuntimeException e) {
-            log(Log.ERROR, TAG, "Demo Hook initialization failed", e);
+            log(Log.INFO, TAG, "Registered three demo-only Java probes");
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            log(Log.ERROR, TAG, "Hook initialization failed", error);
         }
     }
 }

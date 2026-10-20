@@ -19,6 +19,14 @@
             </intent-filter>
         </activity>
         <activity android:name=".TraceAnalysisActivity" android:exported="false"/>
+        <activity android:name=".MobileHookActivity" android:exported="false"/>
+        <provider
+            android:name=".storage.MobileControlProvider"
+            android:authorities="dev.smallfish.hooklab.control"
+            android:exported="true"
+            android:grantUriPermissions="false"
+            android:readPermission="dev.smallfish.hooklab.permission.EVENT_WRITE"
+            android:writePermission="dev.smallfish.hooklab.permission.EVENT_WRITE"/>
         <provider
             android:name=".storage.EventProvider"
             android:authorities="dev.smallfish.hooklab.events"

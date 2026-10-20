@@ -12,8 +12,8 @@ android {
         applicationId = "dev.smallfish.hooklab"
         minSdk = 29
         targetSdk = 33
-        versionCode = 3
-        versionName = "0.3.0-m2-preview"
+        versionCode = 4
+        versionName = "0.3.1-mobile-preview"
     }
     buildFeatures {
         compose = true
