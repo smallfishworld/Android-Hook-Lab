@@ -1,74 +1,104 @@
 # Android Hook Lab
 
-基于 **Vector / modern libxposed** 的 Android 动态 Hook 调试工作台，面向自有应用及明确授权的测试目标。
+面向自有 / 明确授权应用的 Android 方法 Hook、运行时分析与性能诊断工作台。
 
-> 当前版本：**0.2.0 M1 Preview**。已经有 Compose Android UI、Demo 方法 Hook、实时事件、统计和 JSONL 导出。**尚未完成动态任意应用 Hook、Frida、Native 分析及真实设备验收**。
+> **当前：v0.3.0 M2 Preview（2026-10-20）**。M1 的 Vector 常驻 Demo Hook + Compose UI 保留；新增 Frida 17 电脑端动态 Java Hook、方法发现、JSON 规则、显式调用树和热点分析，以及 Android 端 Frida Trace 的**离线**导入查看。兼容性仍需 RMX3350 真机验证。
 
-## 立即体验
+## 核心能力
 
-打开 GitHub [Android CI 工作流](./.github/workflows/android.yml)，从**成功的最新构建**下载 `hook-lab-m1-preview-debug-apks`（两个 APK 必须来自同一次构建）：
+| 能力 | 当前实现 | 使用位置 |
+|---|---|---|
+| Vector 常驻 Hook | **Demo 两个方法**，数字参数/返回值/异常及毫秒耗时 | Android Live / Methods |
+| 动态 Java 类发现 | 搜索目标进程已加载类，限定授权包名前缀 | Frida Desktop Console |
+| 方法浏览 | 列出选中类的 Java 方法和参数重载 | Frida Desktop Console |
+| 动态 Hook 控制 | 选择**精确重载**安装/取消 Hook，最多 16 条 | Frida Desktop Console |
+| Hook 规则 | 版本化 JSON，校验包名、类名和签名，导入/导出 | Desktop |
+| 调用栈与调用链 | 按需采集类名/方法名，按线程显式 `parent_call_id` | Frida Agent / 分析器 |
+| 实时事件采集 | 有界队列、速率限制、元数据优先；JSONL 落盘 | Desktop |
+| 性能统计 | P50/P95/P99、累计时长、异常、热点方法 | Desktop + Android Analyzer |
+| 时序导出 | Chrome Trace Event JSON 和嵌套调用树 JSON | Desktop |
+| 手机端分析 | JSONL 离线导入、方法热点和调用树 | Android System → Trace Analyzer |
+| Native/Frida 手机内嵌服务 | **尚未实现** | M2.x/M3 |
 
-1. 从同一个 CI Artifact 安装 `android-debug.apk`（Hook Lab）和 `demo-app-debug.apk`（测试目标）。它们必须具有同一套调试签名。
-2. 在 Vector 管理器启用 **Android Hook Lab** 模块，Scope 仅选 **Hook Lab Demo**。
-3. 强制停止并重新打开 Demo，执行亮度/正常校验/异常或 100 次调用测试。
-4. 返回 Hook Lab **Live** 页，检查事件是否真实出现；点击卡片查看完整参数与耗时。
-5. 在 **Methods** 页按方法筛选，在 **System** 页导出 JSONL 或清理事件。
+**注意：Android App 当前没有直接启动/操控 Frida Server 的功能**，桌面动态 Frida 事件需要以 JSONL 导入手机才能在 Analyzer 查看。不能把这种离线流程误认为 Android 上已经实现 Frida 双引擎实时聚合。
 
-> GitHub Actions 构建成功 ≠ Root/Vector 实机注入已经验证。真机测试请参考 [M0 手动测试清单](docs/m0-test-plan.md) 和 [M1 UI 验收](docs/m1-ui.md)。
+## 快速开始
 
-## M1 Preview 功能
+### Android APK
 
-| 模块 | 已实现 |
-|---|---|
-| Android UI | Kotlin + Jetpack Compose，暗色调试工作台；Live / Methods / System |
-| 目标范围 | 固定为项目内的签名 Demo；不允许任意应用静默注入 |
-| Vector Hook | `adjustBrightness(float,int)`、`validateLevel(int)`；读取安全数字参数、结果和异常类型 |
-| 实时事件 | 有界队列 → ContentProvider → SQLite；每 1.2 秒读取最近事件 |
-| 统计分析 | 最新 250 条记录的计数、异常计数、P95 调用耗时 |
-| 调用查看 | 方法/PID 搜索、事件类型过滤、单条调用详情、暂停 UI 刷新 |
-| 数据管理 | 存储配额策略、本机清除、系统文件选择器 JSONL 导出 |
-| 测试目标 | 亮度滑块、正常/异常校验、100 次后台批量调用 |
-| CI | Android 编译、协议与 Demo 单元测试、现代 Xposed 元数据检查及双 APK Artifact |
+从 [Android Hook Lab Build](./.github/workflows/android.yml) 最新**成功** CI 下载 `hook-lab-m2-preview-debug-apks`，安装其中 Hook Lab APK 和 Demo APK（必须来自同次构建，调试签名匹配）。
 
-### 明确的限制
+在 Vector 管理器设置 Hook Lab 模块 Scope，仅包含 Demo App。重启 Demo 后操作按钮，从 Hook Lab 的 Live 页查看 Vector 捕获的数字测试事件。
 
-- “Pause View”仅暂停**界面刷新**，不停止目标进程中已经注册的 Hook。
-- Methods 页是**两个已验证设计目标的方法清单**，不是动态枚举整个 Android 系统。
-- 显示 DATA RECEIVED 只表示存在历史 Hook 事件，**并不保证 Vector 目前在线**。
-- P95 基于最近 250 条调用快照，不是全历史数据。
-- 当前尚未实现 Frida、Native、调用堆栈、调用链、任意授权 App 的方法扫描和热插拔 Hook 规则。
-- 需要与 Android 13 真机上的 Vector 版本兼容；未完成设备实测前不承诺成功率。
+### Frida 17 桌面动态调试
 
-## 设计文档
-
-- [spec.md — 需求规格](spec.md)
-- [design.md — 技术架构](design.md)
-- [docs/m1-ui.md — UI 与交互验收](docs/m1-ui.md)
-- [docs/m0-test-plan.md — 真机调试指南](docs/m0-test-plan.md)
-
-## 技术与工程
-
-```text
-apps/android          Compose 控制台 + EventProvider/SQLite
-engines/vector        libxposed API 102 Hook + bounded async relay
-libs/protocol         白名单事件模型 + P95 统计及单元测试
-samples/demo-app      Java 受控测试应用
-core/                 领域/用例预留
-runtime/collector     扩展采集器预留
-libs/storage          存储层演进预留
-libs/analysis         分析层演进预留
-tools/desktop         桌面分析器预留
-```
-
-技术基线：JDK 17、Gradle 8.9、Android Gradle Plugin 8.7.3、Kotlin 2.0.21、Jetpack Compose、Android SDK 35。
-
-本地构建（需要正确安装 Android SDK、JDK 17 及 Gradle）：
+先在已 Root 手机中准备与电脑客户端兼容版本的 Frida Server，并确认 USB 通信正常。Frida 17 Java Bridge 要单独打包，因此本仓库提供已编译 Agent CI 产物：`hook-lab-m2-frida-agent`。
 
 ```bash
-gradle :libs:protocol:test :samples:demo-app:testDebugUnitTest \
-  :apps:android:testDebugUnitTest :apps:android:assembleDebug :samples:demo-app:assembleDebug
+cd engines/frida
+npm install
+npm run build
+cd ../..
+
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r tools/desktop/requirements.txt
+
+python tools/desktop/hooklab.py --package dev.smallfish.hooklab.demo \
+  --stack --output trace/demo.jsonl
 ```
 
-## 安全与隐私
+进入终端交互后：
 
-所有 M1 事件来源限定于项目自带 Demo，经签名权限和来源包 UID 双重验证，且仅包含安全数字字段、方法名称与异常**类型**。默认不录制私人消息、账号信息、密钥或任意对象内容，也不上传到服务器。不要对没有测试授权的应用使用 Hook。许可证将在完成依赖许可审查后确定。
+```text
+classes ImageProcessor
+methods dev.smallfish.hooklab.demo.ImageProcessor
+hook dev.smallfish.hooklab.demo.ImageProcessor adjustBrightness float int
+hook dev.smallfish.hooklab.demo.ImageProcessor validateLevel int
+status
+saverules trace/rules.json
+exit
+```
+
+随后可导出分析：
+
+```bash
+python tools/desktop/trace_analyzer.py trace/demo.jsonl \
+  --chrome trace/demo.chrome.json \
+  --tree trace/demo.tree.json \
+  --summary trace/demo.summary.json
+```
+
+将 `trace/demo.jsonl` 放到手机文件夹，在 Hook Lab **System → Open M2 Trace Analyzer → Import Frida JSONL** 中查看。方法、耗时、异常和调用树显示在手机上；不展示潜在隐私参数原文。
+
+**完整安装、规则导入/导出、真机验收说明：** [M2 指南 docs/m2-guide.md](./docs/m2-guide.md)。
+
+## 项目文档
+
+- [spec.md — 产品需求](spec.md)
+- [design.md — 总体架构](design.md)
+- [docs/m2-guide.md — M2 安装与验证](docs/m2-guide.md)
+- [docs/m1-ui.md — M1 UI](docs/m1-ui.md)
+- [docs/m0-test-plan.md — M0 真机基线](docs/m0-test-plan.md)
+
+## 工程结构
+
+```text
+apps/android            Android Compose 工作台和离线 Trace Analyzer
+engines/vector          Vector/libxposed Demo Hook, bounded relay
+engines/frida           Frida 17 Java Bridge Agent + NPM 打包
+tools/desktop           USB Frida Host CLI, rule loader, trace analyzer
+libs/protocol           Schema 与统计单元测试
+samples/demo-app        自研可控 Java Hook 测试目标
+core, runtime, libs/... 后续 M2.x/M3 扩展
+```
+
+## 研发与验证
+
+CI 分为 Android Build/Lint/Test 与 Frida Agent/桌面 Python 测试两组 Jobs，均通过后产生对应 Artifact。真机兼容性和执行时性能仍需专门测量：**CI 通过不能证明 Vector/Frida 已在 RMX3350 上成功 attach 或 Hook。**
+
+## 使用边界
+
+仅分析自有或已获授权的目标。非 Demo 包必须显式 `--authorized`，并限定类名前缀；采集器默认只捕获基本数字/布尔值与类型信息，字符串仅记录长度，禁止窃取私人数据、登录凭据、Cookie、Token 和支付信息。默认无云端数据传输，不开放远程监听地址。
+
+项目许可证需完成第三方依赖许可审查后确定，发布前应确认 Frida Java Bridge 等依赖的分发义务。
