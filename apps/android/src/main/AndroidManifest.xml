@@ -19,6 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".TraceAnalysisActivity" android:exported="false"/>
+        <activity android:name=".MobileHookActivity" android:exported="false"/>
         <provider
             android:name=".storage.MobileControlProvider"
             android:authorities="dev.smallfish.hooklab.control"
