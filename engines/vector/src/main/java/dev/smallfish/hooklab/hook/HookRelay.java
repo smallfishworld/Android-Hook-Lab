@@ -154,7 +154,7 @@ final class HookRelay {
                 }
                 ContentValues event = QUEUE.poll(160, TimeUnit.MILLISECONDS);
                 if (event == null) continue;
-                if (!globalCapture) continue; // no buffered data after stop-all
+                if (!isEnabled(event.getAsString("method"))) continue; // no buffered output after rule disable
                 if (ctx != null) {
                     try {
                         ctx.getContentResolver().insert(EVENT_URI, event);
