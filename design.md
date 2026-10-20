@@ -21,7 +21,7 @@ flowchart TB
 ```
 
 - **Apps 层**：读取具备 Launcher 的普通应用，不尝试自动获取系统级敏感应用的作用域。
-- **控制层**：在 Hook Lab App 中使用 `io.github.libxposed:service:102.0.0`。Scope 请求需要 Vector 的授权回调；远程偏好由框架服务提供，跨 UID 不直接共享私有文件。
+- **控制层**：在 Hook Lab App 中使用 `io.github.libxposed:service:101.0.0（兼容框架 API 102 的基础 Scope/Remote Preferences，须真机验证）`。Scope 请求需要 Vector 的授权回调；远程偏好由框架服务提供，跨 UID 不直接共享私有文件。
 - **数据层**：目标模块只向 `dev.smallfish.hooklab.trace` 发送白名单字段的调用元数据；TraceProvider 每次检查 Binder UID 是否来自用户当前选中包名；本地数据库只有 Hook Lab App UID 可以查询。
 - **注入层**：`io.github.libxposed:api:102.0.0` 的 `onPackageReady` 初始化，模块仅运行于 Vector 实际批准的 Scope，拒绝系统与自身 App。
 
