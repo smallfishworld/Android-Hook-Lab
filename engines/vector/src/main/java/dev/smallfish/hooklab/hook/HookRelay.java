@@ -37,7 +37,7 @@ final class HookRelay {
             Uri.parse("content://" + MobileControlContract.AUTHORITY);
 
     private static volatile Context context;
-    private static volatile boolean globalCapture = true;
+    private static volatile boolean globalCapture = false; // fail closed until policy IPC succeeds
     private static volatile boolean floatBrightnessCapture = true;
     private static volatile boolean intBrightnessCapture = true;
     private static volatile boolean validateCapture = true;
