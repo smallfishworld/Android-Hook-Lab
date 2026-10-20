@@ -83,7 +83,7 @@ private fun reportFor(label: String, events: List<ImportedCall>, truncated: Bool
         MethodProfile(
             name, calls.size, calls.count { it.threw },
             percentile(times, .50), percentile(times, .95), percentile(times, .99),
-            times.sumOf { it.durationNs.toDouble() } / 1_000_000.0
+            times.sumOf { it.toDouble() } / 1_000_000.0
         )
     }.sortedByDescending { it.totalMs }
     val byKey = events.associateBy { Pair(it.pid, it.id) }
