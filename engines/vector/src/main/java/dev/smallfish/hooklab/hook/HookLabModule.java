@@ -238,8 +238,10 @@ public final class HookLabModule extends XposedModule {
         }
         private static String summarize(Object value) {
             if (value==null) return "null";
-            if (value instanceof Number || value instanceof Boolean ||
-                    value instanceof Character) {
+            if (value instanceof Byte || value instanceof Short ||
+                    value instanceof Integer || value instanceof Long ||
+                    value instanceof Float || value instanceof Double ||
+                    value instanceof Boolean || value instanceof Character) {
                 return "primitive="+value;
             }
             if (value instanceof String) return "string_len="+((String)value).length();
