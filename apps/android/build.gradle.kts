@@ -12,8 +12,8 @@ android {
         applicationId = "dev.smallfish.hooklab"
         minSdk = 29
         targetSdk = 33
-        versionCode = 4
-        versionName = "0.3.1-mobile-preview"
+        versionCode = 5
+        versionName = "0.4.0-mobile"
     }
     buildFeatures {
         compose = true
@@ -30,6 +30,7 @@ android {
 dependencies {
     implementation(project(":engines:vector"))
     implementation(project(":libs:protocol"))
+    implementation("io.github.libxposed:service:102.0.0")
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.activity:activity-compose:1.9.3")
