@@ -58,7 +58,7 @@ private val knownMethodDescriptions = listOf(
  */
 class MobileHookActivity : ComponentActivity() {
     private val provider = Uri.parse("content://" + MobileControlContract.AUTHORITY)
-    private var visible by mutableStateOf(false)
+    private var screenActive by mutableStateOf(false)
     private var current by mutableStateOf<OnDeviceSnapshot?>(null)
     private var problem by mutableStateOf<String?>(null)
     private var busy by mutableStateOf(false)
@@ -72,7 +72,7 @@ class MobileHookActivity : ComponentActivity() {
                 primary = Mint, onPrimary = Dark, background = Dark,
                 onBackground = Foreground, surface = Card, onSurface = Foreground
             )) {
-                val observing = visible
+                val observing = screenActive
                 LaunchedEffect(observing) {
                     if (observing) {
                         while (isActive) {
@@ -96,11 +96,11 @@ class MobileHookActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        visible = true
+        screenActive = true
     }
 
     override fun onPause() {
-        visible = false
+        screenActive = false
         super.onPause()
     }
 
