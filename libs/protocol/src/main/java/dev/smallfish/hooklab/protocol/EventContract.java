@@ -10,7 +10,8 @@ public final class EventContract {
     public static final String METHOD_VALIDATE = "ImageProcessor.validateLevel(int)";
 
     public static boolean isAllowedMethod(String method) {
-        return METHOD_BRIGHTNESS.equals(method) || METHOD_VALIDATE.equals(method);
+        return METHOD_BRIGHTNESS.equals(method) || METHOD_VALIDATE.equals(method)
+            || MobileControlContract.METHOD_BRIGHTNESS_INT.equals(method);
     }
 
     public static boolean isAllowedOutcome(String outcome) {
