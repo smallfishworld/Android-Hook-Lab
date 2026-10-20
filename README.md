@@ -50,7 +50,7 @@ Hook Lab Android App
 GitHub Actions：[Android Hook Lab Mobile](.github/workflows/android.yml)。
 成功后下载 `hook-lab-v0.4-mobile`，其中仅含 **Android Hook Lab APK**。
 
-本地需要 Java 17、Android SDK 35、Gradle 8.9：
+本地需要 Java 17、Android SDK 36、Gradle 8.11.1：
 
 ```bash
 gradle :libs:protocol:test :apps:android:testDebugUnitTest \
