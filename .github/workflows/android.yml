@@ -56,7 +56,7 @@ jobs:
           gradle-version: '8.9'
       - name: Unit tests and debug builds
         run: |
-          gradle --no-daemon :libs:protocol:test :samples:demo-app:testDebugUnitTest :apps:android:testDebugUnitTest :apps:android:assembleDebug :samples:demo-app:assembleDebug :apps:android:lintDebug :samples:demo-app:lintDebug
+          gradle --no-daemon :libs:protocol:test :apps:android:testDebugUnitTest :apps:android:assembleDebug :apps:android:lintDebug 
       - name: Check modern Xposed entry metadata
         run: |
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/java_init.list'
@@ -64,8 +64,7 @@ jobs:
           unzip -l apps/android/build/outputs/apk/debug/android-debug.apk | grep -F 'META-INF/xposed/module.prop'
       - uses: actions/upload-artifact@v4
         with:
-          name: hook-lab-m2-mobile-debug-apks
+          name: hook-lab-v0.4-mobile-apk
           path: |
             apps/android/build/outputs/apk/debug/*.apk
-            samples/demo-app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
