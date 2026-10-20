@@ -146,6 +146,12 @@ public final class TraceProvider extends ContentProvider {
             data.putLong("heartbeat", preferences.getLong("heartbeat", -1L));
             return data;
         }
+        if ("reset".equals(method)) {
+            owner();
+            preferences.edit().remove("classes").remove("methods")
+                    .remove("method_class").putLong("heartbeat", -1L).commit();
+            return Bundle.EMPTY;
+        }
         if ("clear".equals(method)) {
             owner();
             database.getWritableDatabase().delete("events", null, null);
