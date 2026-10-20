@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Android-Hook-Lab"
-include(":apps:android", ":engines:vector", ":samples:demo-app", ":libs:protocol")
+include(":apps:android", ":engines:vector", ":libs:protocol")
