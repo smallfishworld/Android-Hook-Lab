@@ -315,6 +315,11 @@ class HookLabHome : ComponentActivity() {
                     }
                     item{Header("CLASSES  "+record.classes.size)}
                     item{Search(query,search)}
+                    if(RuleWire.classForTarget(selected,query.trim())) item {
+                        OutlinedButton(onClick={browse(query.trim())},modifier=Modifier.fillMaxWidth()) {
+                            Text("LOOK UP EXACT CLASS NAME",color=accent,fontSize=11.sp)
+                        }
+                    }
                     items(record.classes.filter{query.isBlank()||
                         it.contains(query,true)},key={it}){name->
                         Tile {
